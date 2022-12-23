@@ -1,11 +1,12 @@
 pragma solidity ^0.8.18;
 
 contract Staker {
-    uint public deadline;
+    uint public constant deadline;
     uint public ran = 0;
     uint public constant threshold;
     mapping (address => uint) public balances;
     event Stake(address payer, uint256 amount);
+    bool withdrawable = false;
 
     constructor(uint _deadline, uint _threshold) {
         deadline = _deadline;
@@ -37,7 +38,7 @@ contract Staker {
         emit Stake(msg.sender, msg.value);
     }
 
-    function timeLeft() returns(uint) {
+    function timeLeft() public returns(uint) {
         if(block.timestamp>=deadline) {return 0;}
         return deadline-block.timestamp;
     }
@@ -47,9 +48,19 @@ contract Staker {
             //run something here
         }
         else {
-            //withdraw()
+            withdrawable = true;
         }
         ran++;
+    }
+
+    function withdraw() public {
+        if(withdrawable) {
+            payable(msg.sender).transfer(balances[msg.sender]);
+        }
+    }
+
+    fallback() external payable {
+        stake();
     }
 
 }
